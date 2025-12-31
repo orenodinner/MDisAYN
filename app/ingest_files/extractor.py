@@ -30,8 +30,10 @@ _logger = logging.getLogger(__name__)
 
 try:
     from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
 except ImportError:  # pragma: no cover - optional dependency
     PdfReader = None
+    PdfReadError = None
 
 try:
     import docx
@@ -43,20 +45,39 @@ def _read_text_file(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def _read_pdf(path: Path) -> str:
-    reader = PdfReader(str(path))
-    chunks = []
-    for page in reader.pages:
-        page_text = page.extract_text() or ""
-        if page_text:
-            chunks.append(page_text)
-    return "\n".join(chunks)
+def _read_pdf(path: Path) -> Optional[str]:
+    try:
+        reader = PdfReader(str(path))
+        chunks = []
+        for page in reader.pages:
+            try:
+                page_text = page.extract_text() or ""
+            except Exception as exc:
+                _logger.warning("PDF page extract failed: %s (%s)", path, exc)
+                continue
+            if page_text:
+                chunks.append(page_text)
+        return "\n".join(chunks)
+    except Exception as exc:
+        if PdfReadError is not None and isinstance(exc, PdfReadError):
+            _logger.warning("PDF read failed: %s (%s)", path, exc)
+        else:
+            _logger.warning("PDF read failed: %s (%s)", path, exc)
+        return None
 
 
-def _read_docx(path: Path) -> str:
-    document = docx.Document(str(path))
-    chunks = [paragraph.text for paragraph in document.paragraphs if paragraph.text]
-    return "\n".join(chunks)
+def _read_docx(path: Path) -> Optional[str]:
+    try:
+        document = docx.Document(str(path))
+        try:
+            chunks = [paragraph.text for paragraph in document.paragraphs if paragraph.text]
+        except Exception as exc:
+            _logger.warning("DOCX paragraph extract failed: %s (%s)", path, exc)
+            return None
+        return "\n".join(chunks)
+    except Exception as exc:
+        _logger.warning("DOCX read failed: %s (%s)", path, exc)
+        return None
 
 
 def extract_text(path: Path, max_bytes: int) -> Optional[Tuple[str, dict]]:
@@ -74,13 +95,23 @@ def extract_text(path: Path, max_bytes: int) -> Optional[Tuple[str, dict]]:
         if PdfReader is None:
             _logger.warning("Skipping PDF because pypdf is not available: %s", path)
             return None
-        text = _read_pdf(path)
+        try:
+            text = _read_pdf(path)
+        except Exception as exc:
+            _logger.warning("PDF extract failed: %s (%s)", path, exc)
+            return None
     elif extension == ".docx":
         if docx is None:
             _logger.warning("Skipping DOCX because python-docx is not available: %s", path)
             return None
-        text = _read_docx(path)
+        try:
+            text = _read_docx(path)
+        except Exception as exc:
+            _logger.warning("DOCX extract failed: %s (%s)", path, exc)
+            return None
     else:
+        return None
+    if text is None:
         return None
     metadata = {
         "extension": extension,
