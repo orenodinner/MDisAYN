@@ -1,0 +1,58 @@
+﻿---
+title: "{{ title }}"
+created: "{{ created_at }}"
+source_type: "{{ source_type }}"
+confidence: {{ confidence }}
+tags:{% if tags and tags|length > 0 %}
+{% for tag in tags %}
+  - {{ tag }}
+{% endfor %}
+{% else %} []{% endif %}
+projects:{% if projects and projects|length > 0 %}
+{% for project in projects if project %}
+  - "{{ project|wikilink }}"
+{% endfor %}
+{% else %} []{% endif %}
+people:{% if people and people|length > 0 %}
+{% for person in people if person %}
+  - "{{ person|wikilink }}"
+{% endfor %}
+{% else %} []{% endif %}
+---
+
+# {{ title }}
+
+## リンク
+{% for link in source_links %}
+- {{ link }}
+{% else %}
+- (なし)
+{% endfor %}
+
+## 要点
+{% for item in summary %}
+- {{ item }}
+{% else %}
+- (なし)
+{% endfor %}
+
+## 決定事項
+{% for item in decisions %}
+- {{ item }}
+{% else %}
+- (なし)
+{% endfor %}
+
+## アクション
+{% for action in actions %}
+- [ ] {{ action.what }}{% if action.who %} (担当: {{ action.who|wikilink }}){% endif %}{% if action.due %} (期限: {{ action.due }}){% endif %}{% if action.evidence %} (根拠: {{ action.evidence }}){% endif %}
+{% else %}
+- [ ] (なし)
+{% endfor %}
+
+## エンティティ
+{% for entity in entities %}
+- **{{ entity.type }}**: {{ entity.value }}
+{% else %}
+- (なし)
+{% endfor %}

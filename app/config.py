@@ -46,6 +46,7 @@ class AppConfig:
     llm_language: str
     llm_json_mode: bool
     obsidian_sources_subdir: str
+    obsidian_template_path: Path
     db_path: Path
     log_events: bool
 
@@ -93,6 +94,9 @@ def load_config() -> AppConfig:
     llm_json_mode = os.getenv("LLM_JSON_MODE", "true").lower() in {"1", "true", "yes"}
 
     obsidian_sources_subdir = os.getenv("OBSIDIAN_SOURCES_SUBDIR", "90_Sources/file")
+    obsidian_template_path = Path(
+        os.getenv("OBSIDIAN_TEMPLATE_PATH", "templates/source_card.md.j2")
+    )
     db_path = Path(os.getenv("META_DB_PATH", str(data_lake_path / "meta.db")))
     log_events = os.getenv("LOG_EVENTS", "true").lower() in {"1", "true", "yes"}
 
@@ -114,6 +118,7 @@ def load_config() -> AppConfig:
         llm_language=llm_language,
         llm_json_mode=llm_json_mode,
         obsidian_sources_subdir=obsidian_sources_subdir,
+        obsidian_template_path=obsidian_template_path,
         db_path=db_path,
         log_events=log_events,
     )

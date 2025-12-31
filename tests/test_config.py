@@ -22,6 +22,7 @@ def test_load_config_from_env(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_LANGUAGE", "ja")
     monkeypatch.setenv("LLM_JSON_MODE", "false")
     monkeypatch.setenv("OBSIDIAN_SOURCES_SUBDIR", "90_Sources/file")
+    monkeypatch.setenv("OBSIDIAN_TEMPLATE_PATH", str(tmp_path / "templates" / "source_card.md.j2"))
     monkeypatch.setenv("LOG_EVENTS", "false")
 
     config = load_config()
@@ -34,4 +35,5 @@ def test_load_config_from_env(tmp_path, monkeypatch):
     assert config.max_file_bytes == 1024 * 1024
     assert config.llm_max_input_chars == 100
     assert config.llm_json_mode is False
+    assert config.obsidian_template_path == tmp_path / "templates" / "source_card.md.j2"
     assert config.log_events is False

@@ -1,30 +1,35 @@
 ﻿from __future__ import annotations
 
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List
 
-
-def _bullets(items: List[str], fallback: str = "(none)") -> str:
-    if not items:
-        return f"- {fallback}"
-    return "\n".join(f"- {item}" for item in items)
+from jinja2 import Environment, FileSystemLoader
 
 
-def _actions(items: List[Dict[str, Any]]) -> str:
-    if not items:
-        return "- [ ] (none)"
-    lines = []
-    for item in items:
-        what = item.get("what") or "(unspecified)"
-        who = item.get("who") or ""
-        due = item.get("due") or ""
-        evidence = item.get("evidence") or ""
-        meta = ", ".join(part for part in [who, due, evidence] if part)
-        if meta:
-            lines.append(f"- [ ] {what} ({meta})")
-        else:
-            lines.append(f"- [ ] {what}")
-    return "\n".join(lines)
+def _wikilink(value: str) -> str:
+    if not value:
+        return ""
+    return f"[[{value}]]"
+
+
+@lru_cache(maxsize=8)
+def _get_env(template_dir: str) -> Environment:
+    env = Environment(
+        loader=FileSystemLoader(template_dir),
+        autoescape=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    env.filters["wikilink"] = _wikilink
+    return env
+
+
+def _ensure_list(value: Any) -> List[Any]:
+    if isinstance(value, list):
+        return value
+    return []
 
 
 def render_source_card(
@@ -33,44 +38,31 @@ def render_source_card(
     source_type: str,
     created_at: datetime,
     entities: List[Dict[str, Any]],
+    template_path: Path = Path("templates/source_card.md.j2"),
 ) -> str:
-    title = payload.get("title") or "Untitled"
-    summary = payload.get("summary", [])
-    decisions = payload.get("decisions", [])
-    actions = payload.get("actions", [])
-    tags = payload.get("tags", [])
-    projects = payload.get("projects", [])
-    people = payload.get("people", [])
-    confidence = payload.get("confidence", 0.0)
+    template_path = Path(template_path)
+    if not template_path.exists():
+        raise FileNotFoundError(f"Template not found: {template_path}")
 
-    entities_lines = []
-    for entity in entities:
-        etype = entity.get("type", "other")
-        value = entity.get("value", "")
-        if value:
-            entities_lines.append(f"- {etype}: {value}")
-    entities_block = "\n".join(entities_lines) if entities_lines else "- (none)"
+    env = _get_env(str(template_path.parent.resolve()))
+    template = env.get_template(template_path.name)
 
-    tags_block = " ".join(f"#{tag}" for tag in tags) if tags else "(none)"
+    context = dict(payload)
+    context.setdefault("title", "Untitled")
+    context["summary"] = _ensure_list(context.get("summary"))
+    context["decisions"] = _ensure_list(context.get("decisions"))
+    context["actions"] = _ensure_list(context.get("actions"))
+    context["tags"] = _ensure_list(context.get("tags"))
+    context["projects"] = _ensure_list(context.get("projects"))
+    context["people"] = _ensure_list(context.get("people"))
 
-    links_block = "\n".join(f"- {link}" for link in source_links) if source_links else "- (none)"
-
-    return (
-        f"# {title}\n\n"
-        f"- Source: {source_type}\n"
-        f"- Ingested: {created_at.isoformat()}\n"
-        f"- Confidence: {confidence}\n\n"
-        "## 原本リンク\n"
-        f"{links_block}\n\n"
-        "## 要点\n"
-        f"{_bullets(summary)}\n\n"
-        "## 決定事項\n"
-        f"{_bullets(decisions)}\n\n"
-        "## 次アクション\n"
-        f"{_actions(actions)}\n\n"
-        "## タグ/人物/プロジェクト\n"
-        f"- Tags: {tags_block}\n"
-        f"- People: {', '.join(people) if people else '(none)'}\n"
-        f"- Projects: {', '.join(projects) if projects else '(none)'}\n"
-        f"- Entities:\n{entities_block}\n"
+    context.update(
+        {
+            "source_links": source_links,
+            "source_type": source_type,
+            "created_at": created_at.isoformat(),
+            "entities": entities,
+        }
     )
+
+    return template.render(context)
