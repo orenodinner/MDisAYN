@@ -30,10 +30,8 @@ _logger = logging.getLogger(__name__)
 
 try:
     from pypdf import PdfReader
-    from pypdf.errors import PdfReadError
 except ImportError:  # pragma: no cover - optional dependency
     PdfReader = None
-    PdfReadError = None
 
 try:
     import docx
