@@ -59,10 +59,7 @@ def _read_pdf(path: Path) -> Optional[str]:
                 chunks.append(page_text)
         return "\n".join(chunks)
     except Exception as exc:
-        if PdfReadError is not None and isinstance(exc, PdfReadError):
-            _logger.warning("PDF read failed: %s (%s)", path, exc)
-        else:
-            _logger.warning("PDF read failed: %s (%s)", path, exc)
+        _logger.warning("PDF read failed: %s (%s)", path, exc)
         return None
 
 
