@@ -11,7 +11,7 @@ Windows 11 / Python 3.11+ 向けの「ローカル情報 → LLM整形 → Obsid
 
 ## セットアップ
 ```powershell
-python -m venv .venv
+
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
