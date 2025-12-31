@@ -136,8 +136,8 @@ def process_file(
             metadata={"source": "file"},
         )
         db.log_event("file_processed", {"path": str(path), "hash": content_hash})
+        _console.print(f"[bold green]完了[/bold green] [cyan]{obsidian_path}[/cyan]")
     finally:
         status.stop()
 
-    _console.print(f"[bold green]✓ 完了[/bold green] [cyan]{obsidian_path}[/cyan]")
     return obsidian_path
