@@ -75,7 +75,7 @@ def load_config() -> AppConfig:
     exclude_globs = _split_list(
         os.getenv(
             "WATCH_EXCLUDE_GLOBS",
-            "*.tmp,*.log,*.exe,*.dll,*.zip,*.7z,*.rar,*.pdf,*.png,*.jpg,*.jpeg,*.gif,*.mp4,*.mov",
+            "*.tmp,*.log,*.exe,*.dll,*.zip,*.7z,*.rar,*.png,*.jpg,*.jpeg,*.gif,*.mp4,*.mov",
         )
     )
     scan_interval_sec = int(os.getenv("SCAN_INTERVAL_SEC", "60"))
