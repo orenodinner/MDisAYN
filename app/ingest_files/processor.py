@@ -54,7 +54,7 @@ def process_file(
         if not extracted:
             return None
 
-        text, metadata = extracted
+        text, _ = extracted
         content_hash = _hash_text(text)
 
         existing = db.get_source("file", str(path))
