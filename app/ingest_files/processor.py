@@ -112,6 +112,7 @@ def process_file(
             source_type="file",
             created_at=created_at,
             entities=payload.get("entities", []),
+            template_path=config.obsidian_template_path,
         )
 
         suffix = content_hash[:8]

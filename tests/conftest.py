@@ -1,4 +1,6 @@
-﻿import pytest
+﻿from pathlib import Path
+
+import pytest
 from app.config import AppConfig
 from app.db import MetadataDB
 
@@ -25,6 +27,7 @@ def mock_config(tmp_path):
         llm_language="ja",
         llm_json_mode=True,
         obsidian_sources_subdir="90_Sources/file",
+        obsidian_template_path=Path.cwd() / "templates" / "source_card.md.j2",
         db_path=tmp_path / "meta.db",
         log_events=True,
     )
