@@ -5,6 +5,8 @@ import time
 from pathlib import Path
 from typing import Iterable
 
+from rich.progress import track
+
 from ..config import AppConfig
 from ..db import MetadataDB
 from ..llm_client import LLMClient
@@ -78,12 +80,15 @@ def run_backfill(config: AppConfig, force: bool = False) -> None:
         language=config.llm_language,
     )
 
-    for path in scan_paths(
-        config.watch_paths,
-        config.watch_recursive,
-        config.exclude_dirs,
-        config.exclude_globs,
-    ):
+    paths = list(
+        scan_paths(
+            config.watch_paths,
+            config.watch_recursive,
+            config.exclude_dirs,
+            config.exclude_globs,
+        )
+    )
+    for path in track(paths, description="一括処理", total=len(paths)):
         try:
             process_file(path, config, db, llm, force=force)
         except Exception as exc:

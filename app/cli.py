@@ -1,7 +1,9 @@
 ﻿from __future__ import annotations
 
 import argparse
-import sys
+
+from rich.console import Console
+from rich.table import Table
 
 from .config import load_config
 from .db import MetadataDB
@@ -15,6 +17,34 @@ def _status() -> int:
     db.close()
     print(f"sources(file)={file_count}")
     return 0
+
+
+def _print_config_table(config) -> None:
+    console = Console()
+    table = Table(title="MDisAYN 設定", show_lines=True)
+    table.add_column("項目", style="bold")
+    table.add_column("値")
+
+    watch_paths = "\n".join(str(path) for path in config.watch_paths) or "-"
+    max_file_mb = int(config.max_file_bytes / (1024 * 1024))
+
+    table.add_row("Vault パス", str(config.vault_path))
+    table.add_row("Data Lake パス", str(config.data_lake_path))
+    table.add_row("DB パス", str(config.db_path))
+    table.add_row("監視パス", watch_paths)
+    table.add_row("再帰監視", str(config.watch_recursive))
+    table.add_row("除外ディレクトリ", ", ".join(config.exclude_dirs) or "-")
+    table.add_row("除外グロブ", ", ".join(config.exclude_globs) or "-")
+    table.add_row("スキャン間隔(秒)", str(config.scan_interval_sec))
+    table.add_row("デバウンス(秒)", str(config.debounce_sec))
+    table.add_row("最大ファイル(MB)", str(max_file_mb))
+    table.add_row("LLM Base URL", config.llm_base_url)
+    table.add_row("LLM Model", config.llm_model)
+    table.add_row("LLM Language", config.llm_language)
+    table.add_row("Obsidian 出力先", config.obsidian_sources_subdir)
+    table.add_row("イベントログ", str(config.log_events))
+
+    console.print(table)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -35,6 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     config = load_config()
+    _print_config_table(config)
 
     if args.command == "run":
         run_watch_loop(config)
