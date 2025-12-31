@@ -23,6 +23,7 @@ def mock_config(tmp_path):
         llm_max_retries=0,
         llm_max_input_chars=8000,
         llm_language="ja",
+        llm_json_mode=True,
         obsidian_sources_subdir="90_Sources/file",
         db_path=tmp_path / "meta.db",
         log_events=True,

@@ -20,6 +20,7 @@ def test_load_config_from_env(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_MAX_RETRIES", "1")
     monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "100")
     monkeypatch.setenv("LLM_LANGUAGE", "ja")
+    monkeypatch.setenv("LLM_JSON_MODE", "false")
     monkeypatch.setenv("OBSIDIAN_SOURCES_SUBDIR", "90_Sources/file")
     monkeypatch.setenv("LOG_EVENTS", "false")
 
@@ -32,4 +33,5 @@ def test_load_config_from_env(tmp_path, monkeypatch):
     assert config.debounce_sec == 1.0
     assert config.max_file_bytes == 1024 * 1024
     assert config.llm_max_input_chars == 100
+    assert config.llm_json_mode is False
     assert config.log_events is False

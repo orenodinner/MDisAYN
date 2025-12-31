@@ -23,6 +23,7 @@ def _make_worker(config: AppConfig) -> tuple[MetadataDB, LLMClient, Worker]:
         timeout_sec=config.llm_timeout_sec,
         max_retries=config.llm_max_retries,
         language=config.llm_language,
+        use_json_mode=config.llm_json_mode,
     )
 
     def _processor(path: Path) -> None:
@@ -78,6 +79,7 @@ def run_backfill(config: AppConfig, force: bool = False) -> None:
         timeout_sec=config.llm_timeout_sec,
         max_retries=config.llm_max_retries,
         language=config.llm_language,
+        use_json_mode=config.llm_json_mode,
     )
 
     paths = list(

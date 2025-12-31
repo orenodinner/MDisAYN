@@ -44,6 +44,7 @@ class AppConfig:
     llm_max_retries: int
     llm_max_input_chars: int
     llm_language: str
+    llm_json_mode: bool
     obsidian_sources_subdir: str
     db_path: Path
     log_events: bool
@@ -89,6 +90,7 @@ def load_config() -> AppConfig:
     llm_max_retries = int(os.getenv("LLM_MAX_RETRIES", "2"))
     llm_max_input_chars = int(os.getenv("LLM_MAX_INPUT_CHARS", "8000"))
     llm_language = os.getenv("LLM_LANGUAGE", "ja")
+    llm_json_mode = os.getenv("LLM_JSON_MODE", "true").lower() in {"1", "true", "yes"}
 
     obsidian_sources_subdir = os.getenv("OBSIDIAN_SOURCES_SUBDIR", "90_Sources/file")
     db_path = Path(os.getenv("META_DB_PATH", str(data_lake_path / "meta.db")))
@@ -110,6 +112,7 @@ def load_config() -> AppConfig:
         llm_max_retries=llm_max_retries,
         llm_max_input_chars=llm_max_input_chars,
         llm_language=llm_language,
+        llm_json_mode=llm_json_mode,
         obsidian_sources_subdir=obsidian_sources_subdir,
         db_path=db_path,
         log_events=log_events,
