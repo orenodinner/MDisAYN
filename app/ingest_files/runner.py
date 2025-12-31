@@ -1,10 +1,13 @@
 ﻿from __future__ import annotations
 
+import signal
+import sys
 import threading
 import time
 from pathlib import Path
 from typing import Iterable
 
+from rich.console import Console
 from rich.progress import track
 
 from ..config import AppConfig
@@ -13,6 +16,9 @@ from ..llm_client import LLMClient
 from .processor import process_file
 from .scanner import scan_paths
 from .watcher import DebounceQueue, Worker, start_periodic_scan, start_watcher
+
+
+_console = Console()
 
 
 def _make_worker(config: AppConfig) -> tuple[MetadataDB, LLMClient, Worker]:
@@ -90,10 +96,30 @@ def run_backfill(config: AppConfig, force: bool = False) -> None:
             config.exclude_globs,
         )
     )
-    for path in track(paths, description="一括処理", total=len(paths)):
-        try:
-            process_file(path, config, db, llm, force=force)
-        except Exception as exc:
-            db.log_event("file_failed", {"path": str(path), "error": str(exc)})
+    stop_requested = False
 
-    db.close()
+    def _signal_handler(sig, frame) -> None:
+        nonlocal stop_requested
+        if stop_requested:
+            _console.print("\n[bold red]強制終了します。[/bold red]")
+            sys.exit(1)
+        stop_requested = True
+        _console.print(
+            "\n[bold yellow]中断要求を受け付けました。現在のファイルの処理完了後に停止します...[/bold yellow]"
+        )
+
+    original_handler = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, _signal_handler)
+
+    try:
+        for path in track(paths, description="一括処理", total=len(paths)):
+            if stop_requested:
+                _console.print("[yellow]処理を中断しました。[/yellow]")
+                break
+            try:
+                process_file(path, config, db, llm, force=force)
+            except Exception as exc:
+                db.log_event("file_failed", {"path": str(path), "error": str(exc)})
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
+        db.close()
